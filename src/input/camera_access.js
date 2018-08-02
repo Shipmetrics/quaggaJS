@@ -63,9 +63,7 @@ function initCamera(video, constraints) {
     vConstraintsPromise = supported.facingMode || isFirefox || constraints.facingMode ? Promise.resolve(constraints) : getDeviceId(facingMode).then(function (deviceId) {
         return { deviceId: deviceId };
     });
-    return vConstraintsPromise.then(function (vidConstraint) {
-        return getUserMedia(vidConstraint)
-            .then((stream) => {
+    return vConstraintsPromise.then(vidConstraint => navigator.mediaDevices.getUserMedia({ video: vidConstraint })).then((stream) => {
                 return new Promise((resolve) => {
                     streamRef = stream;
                     video.setAttribute("autoplay", true);
@@ -76,9 +74,7 @@ function initCamera(video, constraints) {
                         video.play();
                         resolve();
                     });
-                });
-            })
-        .then(waitForVideo.bind(null, video));
+                }).then(waitForVideo.bind(null, video));
     })
 }
 
