@@ -40,7 +40,7 @@ function waitForVideo(video) {
  * @param {Object} video
  */
 function initCamera(video, constraints) {
-    
+    let vConstraintsPromise
     var isFirefox = /firefox/i.test(navigator.userAgent);
     var supported = {}
     try {
