@@ -38,21 +38,51 @@ function waitForVideo(video) {
  * @param {Object} video
  */
 function initCamera(video, constraints) {
-    return getUserMedia(constraints)
-    .then((stream) => {
-        return new Promise((resolve) => {
-            streamRef = stream;
-            video.setAttribute("autoplay", true);
-            video.setAttribute('muted', true);
-            video.setAttribute('playsinline', true);
-            video.srcObject = stream;
-            video.addEventListener('loadedmetadata', () => {
-                video.play();
-                resolve();
-            });
+    
+        var isFirefox = /firefox/i.test(navigator.userAgent);
+        var supported = {}
+        try {
+          supported = navigator.mediaDevices !== undefined ? navigator.mediaDevices.getSupportedConstraints() : {};
+        } catch (Exception) {
+          supported = navigator.mediaDevices !== undefined && navigator.mediaDevices.hasOwnProperty('getSupportedConstraints') ? navigator.mediaDevices.getSupportedConstraints() : {};
+        }
+        
+        var constraints = {}
+  
+        if (!props.constraints) {
+          if (supported.facingMode) {
+            constraints.facingMode = { ideal: facingMode }
+          }
+          if (supported.aspectRatio) {
+            constraints.aspectRatio = 1
+          }
+          if (supported.frameRate) {
+            constraints.frameRate = { ideal: 25, min: 10 }
+          }
+        } else {
+          constraints = props.constraints
+        }
+
+        vConstraintsPromise = supported.facingMode || isFirefox || constraints.facingMode ? Promise.resolve(constraints) : getDeviceId(facingMode).then(function (deviceId) {
+          return { deviceId: deviceId };
         });
-    })
-    .then(waitForVideo.bind(null, video));
+      return vConstraintsPromise.then(function (video) {
+        return  getUserMedia(constraints)
+            .then((stream) => {
+                return new Promise((resolve) => {
+                    streamRef = stream;
+                    video.setAttribute("autoplay", true);
+                    video.setAttribute('muted', true);
+                    video.setAttribute('playsinline', true);
+                    video.srcObject = stream;
+                    video.addEventListener('loadedmetadata', () => {
+                        video.play();
+                        resolve();
+                    });
+                });
+            })
+            .then(waitForVideo.bind(null, video));
+      }).then(this.handleVideo).catch(onError);
 }
 
 function deprecatedConstraints(videoConstraints) {
